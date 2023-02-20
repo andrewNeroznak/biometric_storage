@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.security.keystore.KeyProperties
+import android.util.Log
 import mu.KotlinLogging
 import java.io.File
 import java.io.IOException
@@ -68,6 +69,8 @@ class BiometricStorageFile(
         }
         fileV2 = File(baseDir, fileNameV2)
 
+        Log.d("Andrew", "Initialized $this with $options")
+
         logger.trace { "Initialized $this with $options" }
 
         validateOptions()
@@ -84,6 +87,7 @@ class BiometricStorageFile(
         if (fileV2.exists()) {
             return cryptographyManager.getInitializedCipherForDecryption(masterKeyName, fileV2)
         }
+        Log.d("Andrew", "No file exists, no IV found. null cipher.")
         logger.debug { "No file exists, no IV found. null cipher." }
         return null
     }
@@ -97,11 +101,13 @@ class BiometricStorageFile(
         try {
             val encrypted = cryptographyManager.encryptData(content, useCipher)
             fileV2.writeBytes(encrypted.encryptedPayload)
+            Log.d("Andrew", "Successfully written ${encrypted.encryptedPayload.size} bytes.")
             logger.debug { "Successfully written ${encrypted.encryptedPayload.size} bytes." }
 
             return
         } catch (ex: IOException) {
             // Error occurred opening file for writing.
+            Log.d("Andrew", "Error while writing encrypted file $fileV2")
             logger.error(ex) { "Error while writing encrypted file $fileV2" }
             throw ex
         }
@@ -117,6 +123,7 @@ class BiometricStorageFile(
                 logger.debug { "read ${bytes.size}" }
                 cryptographyManager.decryptData(bytes, useCipher)
             } catch (ex: IOException) {
+                Log.d("Andrew", "Error while writing encrypted file $fileV2")
                 logger.error(ex) { "Error while writing encrypted file $fileV2" }
                 null
             }
